@@ -5,9 +5,9 @@
   "price": 14,
   "payment_provider": "polar",
   "status": "ready_for_payment",
-  "vercel_deploy_url": null,
+  "vercel_deploy_url": "https://mcp-discover.vercel.app",
   "polar_checkout_url": null,
-  "github_repo": null,
+  "github_repo": "https://github.com/universe7creator/mcp-discover",
   "created_at": "2026-04-27",
   "description": "Searchable directory + one-click deploy templates for MCP servers. Developers find a server (browser, git, slack, github), click \"Deploy to Vercel\", get a running MCP server with their own API key pre-wired."
 }
