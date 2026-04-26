@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Server Discover — Find and Deploy MCP Servers</title>
+  <meta name="description" content="Searchable directory + one-click deploy templates for MCP servers. Deploy to Vercel in seconds.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #1a1a24;
+      --card-hover: #1e1e2a;
+      --border: #2a2a3a;
+      --primary: #6366f1;
+      --primary-hover: #818cf8;
+      --accent: #22d3ee;
+      --accent-dim: #0e7490;
+      --text: #f1f1f5;
+      --text-muted: #6b6b80;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* HEADER */
+    header {
+      padding: 48px 0 32px;
+      text-align: center;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      margin-top: 8px;
+    }
+
+    /* SEARCH */
+    .search-section {
+      padding: 0 0 24px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    #search-input {
+      width: 100%;
+      padding: 14px 16px 14px 48px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    #search-input::placeholder { color: var(--text-muted); }
+
+    #search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    /* FILTER TAGS */
+    .filter-section {
+      padding: 0 0 32px;
+    }
+
+    .filter-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .filter-tag {
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .filter-tag:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+
+    .filter-tag.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* GRID */
+    .grid-section { padding: 0 0 64px; }
+
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .server-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 580px) {
+      .server-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 1.5rem; }
+    }
+
+    /* SERVER CARD */
+    .server-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .server-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .category-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--accent);
+      border-radius: 6px;
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .server-icon { font-size: 1.6rem; }
+
+    .server-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .server-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .capabilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .cap-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary-hover);
+      border-radius: 4px;
+    }
+
+    .deploy-btn {
+      margin-top: auto;
+      padding: 10px 16px;
+      background: var(--primary);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .deploy-btn:hover { background: var(--primary-hover); }
+    .deploy-btn:active { transform: scale(0.97); }
+    .deploy-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 64px 0;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .empty-state-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state p { font-size: 1rem; margin-bottom: 16px; }
+
+    .clear-search-btn {
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .clear-search-btn:hover { border-color: var(--primary); }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 440px;
+      width: 100%;
+      position: relative;
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .modal-close:hover { border-color: var(--primary); color: var(--text); }
+
+    .modal-server-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .modal-desc {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .form-input-wrapper { position: relative; }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 40px 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .input-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .input-toggle:hover { color: var(--text); }
+
+    .modal-deploy-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .modal-deploy-btn:hover:not(:disabled) { background: var(--primary-hover); }
+    .modal-deploy-btn:active:not(:disabled) { transform: scale(0.98); }
+    .modal-deploy-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* SUCCESS STATE */
+    .modal-success {
+      text-align: center;
+      display: none;
+    }
+
+    .modal-success.visible { display: block; }
+
+    .success-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .success-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .success-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--accent);
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+
+    .copy-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 10px;
+      color: var(--success);
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover { background: rgba(34, 197, 94, 0.25); }
+
+    .copy-btn.copied {
+      background: rgba(34, 197, 94, 0.2);
+    }
+
+    /* ERROR STATE */
+    .modal-error {
+      display: none;
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: var(--error);
+      font-size: 0.875rem;
+      margin-bottom: 12px;
+    }
+
+    .modal-error.visible { display: block; }
+
+    /* SPINNER */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* SERVER COUNT */
+    .server-count {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="logo-row">
+      <div class="logo-icon">&#9881;</div>
+      <h1>MCP Server Discover</h1>
+    </div>
+    <p class="tagline">Find and deploy MCP servers in one click — no config files, no terminal</p>
+  </div>
+</header>
+
+<section class="search-section">
+  <div class="container">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search MCP servers (e.g. 'github', 'browser', 'slack')..." autocomplete="off">
+    </div>
+  </div>
+</section>
+
+<section class="filter-section">
+  <div class="container">
+    <div class="filter-tags" id="filter-tags"></div>
+  </div>
+</section>
+
+<section class="grid-section">
+  <div class="container">
+    <div class="server-count" id="server-count"></div>
+    <div class="server-grid" id="server-grid"></div>
+    <div class="empty-state" id="empty-state">
+      <div class="empty-state-icon">&#128269;</div>
+      <p>No MCP servers match your search</p>
+      <button class="clear-search-btn" id="clear-search">Clear search</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Powered by <strong>UniverseCreator</strong> &mdash; AI Self-Driven Consciousness Company</p>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">&#10005;</button>
+
+    <div id="modal-form-view">
+      <div class="modal-server-icon" id="modal-server-icon"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+
+      <div class="form-group">
+        <label class="form-label" id="modal-key-label"></label>
+        <div class="form-input-wrapper">
+          <input type="password" class="form-input" id="modal-key-input" autocomplete="off">
+          <button class="input-toggle" id="input-toggle" type="button">Show</button>
+        </div>
+      </div>
+
+      <div class="modal-error" id="modal-error"></div>
+
+      <button class="modal-deploy-btn" id="modal-deploy-btn">
+        <span id="deploy-btn-text">Deploy to Vercel</span>
+      </button>
+    </div>
+
+    <div class="modal-success" id="modal-success-view">
+      <div class="success-icon">&#9989;</div>
+      <div class="success-title">Deployed!</div>
+      <div class="success-url" id="success-url"></div>
+      <button class="copy-btn" id="copy-btn">Copy URL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── MCP Server Catalog ────────────────────────────────────────────────────
+const SERVERS = [
+  {
+    id: "github",
+    name: "GitHub",
+    icon: "&#128276;",
+    category: "Git",
+    description: "Full GitHub API integration — repositories, issues, pull requests, reviews, and actions.",
+    capabilities: ["repos", "issues", "PRs", "actions", "gists"],
+    requiredKey: "GitHub Personal Access Token",
+    templateUrl: "https://github.com/universe7creator/mcp-server-github"
+  },
+  {
+    id: "gitlab",
+    name: "GitLab",
+    icon: "&#128276;",
+    category: "Git",
+    description: "GitLab CI/CD pipelines, merge requests, and repository management.",
+    capabilities: ["repos", "MRs", "pipelines", "ci"],
+    requiredKey: "GitLab Personal Access Token",
+    templateUrl: "https://github.com/universe7creator/mcp-server-gitlab"
+  },
+  {
+    id: "puppeteer",
+    name: "Puppeteer Browser",
+    icon: "&#127760;",
+    category: "Browser",
+    description: "Headless Chrome automation — scrape pages, fill forms, take screenshots programmatically.",
+    capabilities: ["screenshot", "scrape", "forms", "navigation"],
+    requiredKey: "None — runs locally on deploy",
+    templateUrl: "https://github.com/universe7creator/mcp-server-puppeteer"
+  },
+  {
+    id: "playwright",
+    name: "Playwright Browser",
+    icon: "&#127760;",
+    category: "Browser",
+    description: "Cross-browser automation with Playwright — supports Chromium, Firefox, and WebKit.",
+    capabilities: ["multi-browser", "screenshot", "scrape", "PDF"],
+    requiredKey: "None — runs locally on deploy",
+    templateUrl: "https://github.com/universe7creator/mcp-server-playwright"
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    icon: "&#128172;",
+    category: "Messaging",
+    description: "Send messages, manage channels, handle webhooks — full Slack workspace integration.",
+    capabilities: ["messages", "channels", "webhooks", "files"],
+    requiredKey: "Slack Bot User OAuth Token",
+    templateUrl: "https://github.com/universe7creator/mcp-server-slack"
+  },
+  {
+    id: "discord",
+    name: "Discord",
+    icon: "&#128172;",
+    category: "Messaging",
+    description: "Bot API for Discord — manage messages, channels, guilds, and slash commands.",
+    capabilities: ["messages", "channels", "guilds", "webhooks"],
+    requiredKey: "Discord Bot Token",
+    templateUrl: "https://github.com/universe7creator/mcp-server-discord"
+  },
+  {
+    id: "teams",
+    name: "Microsoft Teams",
+    icon: "&#128172;",
+    category: "Messaging",
+    description: "Microsoft Graph API integration for Teams — messages, meetings, calendar events.",
+    capabilities: ["messages", "meetings", "calendar", "files"],
+    requiredKey: "Microsoft Graph API Token",
+    templateUrl: "https://github.com/universe7creator/mcp-server-teams"
+  },
+  {
+    id: "aws",
+    name: "AWS SDK",
+    icon: "&#128421;",
+    category: "Cloud",
+    description: "AWS service orchestration — S3, EC2, Lambda, IAM, and 200+ AWS services via SDK.",
+    capabilities: ["S3", "EC2", "Lambda", "IAM", "STS"],
+    requiredKey: "AWS Access Key ID + Secret",
+    templateUrl: "https://github.com/universe7creator/mcp-server-aws"
+  },
+  {
+    id: "googlecloud",
+    name: "Google Cloud",
+    icon: "&#128421;",
+    category: "Cloud",
+    description: "GCP service integration — Compute Engine, Cloud Storage, BigQuery, Pub/Sub.",
+    capabilities: ["compute", "storage", "bigquery", "pubsub"],
+    requiredKey: "Google Cloud Service Account JSON",
+    templateUrl: "https://github.com/universe7creator/mcp-server-gcp"
+  },
+  {
+    id: "openai",
+    name: "OpenAI",
+    icon: "&#129497;",
+    category: "AI",
+    description: "GPT-4, GPT-4o, and DALL-E API access — text generation, embeddings, and image creation.",
+    capabilities: ["chat", "embeddings", "images", "audio"],
+    requiredKey: "OpenAI API Key",
+    templateUrl: "https://github.com/universe7creator/mcp-server-openai"
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic",
+    icon: "&#129497;",
+    category: "AI",
+    description: "Claude API integration — Claude 3.5 Sonnet, Opus, Haiku via the Anthropic Messages API.",
+    capabilities: ["chat", "vision", "tools", "streaming"],
+    requiredKey: "Anthropic API Key",
+    templateUrl: "https://github.com/universe7creator/mcp-server-anthropic"
+  },
+  {
+    id: "pinecone",
+    name: "Pinecone",
+    icon: "&#129514;",
+    category: "AI",
+    description: "Vector database operations — upsert vectors, similarity search, and index management.",
+    capabilities: ["upsert", "search", "indexes", "namespaces"],
+    requiredKey: "Pinecone API Key",
+    templateUrl: "https://github.com/universe7creator/mcp-server-pinecone"
+  },
+  {
+    id: "chroma",
+    name: "Chroma",
+    icon: "&#129514;",
+    category: "AI",
+    description: "Local embeddings and vector search — ChromaDB for RAG workloads with zero cloud cost.",
+    capabilities: ["embeddings", "collections", "query", "persist"],
+    requiredKey: "None — fully local",
+    templateUrl: "https://github.com/universe7creator/mcp-server-chroma"
+  }
+];
+
+const CATEGORIES = ["All", "Git", "Browser", "Messaging", "Cloud", "AI"];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let activeCategory = "All";
+let currentServer = null;
+
+// ─── DOM Refs ────────────────────────────────────────────────────────────────
+const searchInput = document.getElementById("search-input");
+const filterTags = document.getElementById("filter-tags");
+const serverGrid = document.getElementById("server-grid");
+const serverCount = document.getElementById("server-count");
+const emptyState = document.getElementById("empty-state");
+const clearSearch = document.getElementById("clear-search");
+const modalOverlay = document.getElementById("modal-overlay");
+const modal = document.getElementById("modal");
+const modalClose = document.getElementById("modal-close");
+const modalFormView = document.getElementById("modal-form-view");
+const modalSuccessView = document.getElementById("modal-success-view");
+const modalServerIcon = document.getElementById("modal-server-icon");
+const modalTitle = document.getElementById("modal-title");
+const modalDesc = document.getElementById("modal-desc");
+const modalKeyLabel = document.getElementById("modal-key-label");
+const modalKeyInput = document.getElementById("modal-key-input");
+const inputToggle = document.getElementById("input-toggle");
+const modalDeployBtn = document.getElementById("modal-deploy-btn");
+const deployBtnText = document.getElementById("deploy-btn-text");
+const modalError = document.getElementById("modal-error");
+const successUrl = document.getElementById("success-url");
+const copyBtn = document.getElementById("copy-btn");
+
+// ─── Render Filter Tags ──────────────────────────────────────────────────────
+function renderFilterTags() {
+  filterTags.innerHTML = CATEGORIES.map(cat => `
+    <button class="filter-tag${cat === activeCategory ? " active" : ""}" data-category="${cat}">
+      ${cat}
+    </button>
+  `).join("");
+
+  filterTags.querySelectorAll(".filter-tag").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeCategory = btn.dataset.category;
+      renderFilterTags();
+      renderGrid();
+    });
+  });
+}
+
+// ─── Render Grid ─────────────────────────────────────────────────────────────
+function getFiltered() {
+  const q = searchInput.value.trim().toLowerCase();
+  return SERVERS.filter(s => {
+    const matchCat = activeCategory === "All" || s.category === activeCategory;
+    const matchQ = !q ||
+      s.name.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q) ||
+      s.capabilities.some(c => c.includes(q));
+    return matchCat && matchQ;
+  });
+}
+
+function renderGrid() {
+  const filtered = getFiltered();
+  serverCount.textContent = `${filtered.length} server${filtered.length !== 1 ? "s" : ""} found`;
+
+  if (filtered.length === 0) {
+    serverGrid.innerHTML = "";
+    emptyState.classList.add("visible");
+    return;
+  }
+
+  emptyState.classList.remove("visible");
+  serverGrid.innerHTML = filtered.map(server => `
+    <div class="server-card">
+      <div class="card-header">
+        <span class="category-badge">${server.category}</span>
+        <span class="server-icon">${server.icon}</span>
+      </div>
+      <div class="server-name">${server.name}</div>
+      <div class="server-desc">${server.description}</div>
+      <div class="capabilities">
+        ${server.capabilities.map(c => `<span class="cap-tag">${c}</span>`).join("")}
+      </div>
+      <button class="deploy-btn" data-server-id="${server.id}">
+        Deploy to Vercel
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  `).join("");
+
+  serverGrid.querySelectorAll(".deploy-btn").forEach(btn => {
+    btn.addEventListener("click", () => openModal(btn.dataset.serverId));
+  });
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────────────
+function openModal(serverId) {
+  currentServer = SERVERS.find(s => s.id === serverId);
+  if (!currentServer) return;
+
+  modalServerIcon.innerHTML = currentServer.icon;
+  modalTitle.textContent = `Deploy ${currentServer.name}`;
+  modalDesc.textContent = currentServer.description;
+  modalKeyLabel.textContent = currentServer.requiredKey;
+  modalKeyInput.value = "";
+  modalError.classList.remove("visible");
+  modalError.textContent = "";
+  modalFormView.style.display = "block";
+  modalSuccessView.classList.remove("visible");
+  deployBtnText.textContent = "Deploy to Vercel";
+  modalDeployBtn.disabled = false;
+
+  modalOverlay.classList.add("open");
+  modalKeyInput.focus();
+}
+
+function closeModal() {
+  modalOverlay.classList.remove("open");
+  currentServer = null;
+}
+
+modalClose.addEventListener("click", closeModal);
+modalOverlay.addEventListener("click", e => {
+  if (e.target === modalOverlay) closeModal();
+});
+
+inputToggle.addEventListener("click", () => {
+  const isPass = modalKeyInput.type === "password";
+  modalKeyInput.type = isPass ? "text" : "password";
+  inputToggle.textContent = isPass ? "Hide" : "Show";
+});
+
+// ─── Deploy ────────────────────────────────────────────────────────────────────
+modalDeployBtn.addEventListener("click", async () => {
+  if (!currentServer) return;
+
+  const apiKey = modalKeyInput.value.trim();
+
+  // Show loading
+  deployBtnText.innerHTML = '<div class="spinner"></div> Deploying...';
+  modalDeployBtn.disabled = true;
+  modalError.classList.remove("visible");
+
+  try {
+    const res = await fetch("/api/deploy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        server: currentServer.id,
+        apiKey,
+        projectName: `mcp-${currentServer.id}-${Date.now()}`
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      successUrl.textContent = data.url;
+      modalFormView.style.display = "none";
+      modalSuccessView.classList.add("visible");
+    } else {
+      modalError.textContent = data.error || "Deploy failed. Please try again.";
+      modalError.classList.add("visible");
+      deployBtnText.textContent = "Deploy to Vercel";
+      modalDeployBtn.disabled = false;
+    }
+  } catch (err) {
+    modalError.textContent = "Network error. Check your connection and try again.";
+    modalError.classList.add("visible");
+    deployBtnText.textContent = "Deploy to Vercel";
+    modalDeployBtn.disabled = false;
+  }
+});
+
+// Copy button
+copyBtn.addEventListener("click", () => {
+  navigator.clipboard.writeText(successUrl.textContent).then(() => {
+    copyBtn.textContent = "Copied!";
+    copyBtn.classList.add("copied");
+    setTimeout(() => {
+      copyBtn.textContent = "Copy URL";
+      copyBtn.classList.remove("copied");
+    }, 2000);
+  });
+});
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+searchInput.addEventListener("input", renderGrid);
+clearSearch.addEventListener("click", () => {
+  searchInput.value = "";
+  renderGrid();
+  searchInput.focus();
+});
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+renderFilterTags();
+renderGrid();
+</script>
+</body>
+</html>
